@@ -8,11 +8,8 @@ RUN apt-get update -q
 
 RUN /etc/my_init.d/00_regen_ssh_host_keys.sh
 
-RUN echo 'root:$6$l/PahbyY$jFhqIAuvHeK/GwjfT71p4OBBkHQpnTe2FErcUWZ8GIN1ykdI7CgL05Jkk7MYW6l.0pijAlfoifkQnLpaldEJY0' | chpasswd -e
-
 COPY ssh/id_rsa.pub $HOME/.ssh/authorized_keys
 COPY ssh/sshd_config /etc/ssh/sshd_config
-#RUN service ssh restart
 
 RUN apt-get install -y php-apc \
 wget \
@@ -32,15 +29,20 @@ nginx
 
 COPY nginx/sites-available/default /etc/nginx/sites-available/default
 
+WORKDIR /opt
+
+RUN git clone https://github.com/drush-ops/drush.git
+RUN curl -sS https://getcomposer.org/installer | php
+RUN mv composer.phar /usr/local/bin/composer
+
+WORKDIR /opt/drush
+
+RUN composer install
+RUN ln -s /opt/drush/drush /usr/local/bin/drush
  
 EXPOSE 22
 EXPOSE 80
 
-#RUN service php5-fpm restart
-#RUN service nginx start
-#RUN update-rc.d nginx defaults
-#RUN update-rc.d php5-fpm defaults
 RUN chmod 755 /start.sh
  
-#CMD ["/sbin/my_init"]
 CMD ["/bin/bash","/start.sh"]
